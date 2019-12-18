@@ -512,6 +512,10 @@ type ExecutionTuple struct { // TODO rename
 	once *sync.Once
 }
 
+func (et *ExecutionTuple) String() string {
+	return fmt.Sprintf("%s in %s", et.ES, et.sequence)
+}
+
 func fillSequence(sequence ExecutionSegmentSequence) ExecutionSegmentSequence {
 	// TODO: discuss if we want to get the lcd of the sequence and fill with it elements of length 1/lcd ?
 	if sequence[0].from.Cmp(zeroRat) != 0 {
