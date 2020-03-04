@@ -87,16 +87,17 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["someKey"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "10 looping VUs for 1m0s (exec: someFunc, startTime: 1m10s, gracefulStop: 10s)", cm["someKey"].GetDescription(nil))
+			et := lib.NewExecutionTuple(nil, nil)
+			assert.Equal(t, "10 looping VUs for 1m0s (exec: someFunc, startTime: 1m10s, gracefulStop: 10s)", cm["someKey"].GetDescription(et))
 
-			schedReqs := cm["someKey"].GetExecutionRequirements(nil)
+			schedReqs := cm["someKey"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 70*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(10), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(10), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			endOffset, isFinal = lib.GetEndOffset(totalReqs)
 			assert.Equal(t, 140*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
@@ -134,16 +135,17 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["varloops"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "Up to 30 looping VUs for 3m10s over 2 stages (gracefulRampDown: 10s, startTime: 23s, gracefulStop: 15s)", cm["varloops"].GetDescription(nil))
+			et := lib.NewExecutionTuple(nil, nil)
+			assert.Equal(t, "Up to 30 looping VUs for 3m10s over 2 stages (gracefulRampDown: 10s, startTime: 23s, gracefulStop: 15s)", cm["varloops"].GetDescription(et))
 
-			schedReqs := cm["varloops"].GetExecutionRequirements(nil)
+			schedReqs := cm["varloops"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 205*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(30), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(30), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			endOffset, isFinal = lib.GetEndOffset(totalReqs)
 			assert.Equal(t, 228*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
@@ -170,16 +172,17 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["ishared"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "22 iterations shared among 12 VUs (maxDuration: 1m40s, gracefulStop: 30s)", cm["ishared"].GetDescription(nil))
+			et := lib.NewExecutionTuple(nil, nil)
+			assert.Equal(t, "22 iterations shared among 12 VUs (maxDuration: 1m40s, gracefulStop: 30s)", cm["ishared"].GetDescription(et))
 
-			schedReqs := cm["ishared"].GetExecutionRequirements(nil)
+			schedReqs := cm["ishared"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 130*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(12), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(12), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			assert.Equal(t, schedReqs, totalReqs)
 		}},
 	},
@@ -203,16 +206,17 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["ipervu"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "23 iterations for each of 13 VUs (maxDuration: 10m0s)", cm["ipervu"].GetDescription(nil))
+			et := lib.NewExecutionTuple(nil, nil)
+			assert.Equal(t, "23 iterations for each of 13 VUs (maxDuration: 10m0s)", cm["ipervu"].GetDescription(et))
 
-			schedReqs := cm["ipervu"].GetExecutionRequirements(nil)
+			schedReqs := cm["ipervu"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 600*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(13), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(13), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			assert.Equal(t, schedReqs, totalReqs)
 		}},
 	},
@@ -228,6 +232,7 @@ var configMapTestCases = []configMapTestCase{
 	// constant-arrival-rate
 	{`{"carrival": {"type": "constant-arrival-rate", "rate": 30, "timeUnit": "1m", "duration": "10m", "preAllocatedVUs": 20, "maxVUs": 30}}`,
 		exp{custom: func(t *testing.T, cm lib.ExecutorConfigMap) {
+			et := lib.NewExecutionTuple(nil, nil)
 			sched := NewConstantArrivalRateConfig("carrival")
 			sched.Rate = null.IntFrom(30)
 			sched.Duration = types.NullDurationFrom(10 * time.Minute)
@@ -238,16 +243,16 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["carrival"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "0.50 iterations/s for 10m0s (maxVUs: 20-30, gracefulStop: 30s)", cm["carrival"].GetDescription(nil))
+			assert.Equal(t, "0.50 iterations/s for 10m0s (maxVUs: 20-30, gracefulStop: 30s)", cm["carrival"].GetDescription(et))
 
-			schedReqs := cm["carrival"].GetExecutionRequirements(nil)
+			schedReqs := cm["carrival"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 630*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(20), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(30), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			assert.Equal(t, schedReqs, totalReqs)
 		}},
 	},
@@ -280,16 +285,17 @@ var configMapTestCases = []configMapTestCase{
 			assert.Empty(t, cm["varrival"].Validate())
 			assert.Empty(t, cm.Validate())
 
-			assert.Equal(t, "Up to 1.00 iterations/s for 8m0s over 2 stages (maxVUs: 20-50, gracefulStop: 30s)", cm["varrival"].GetDescription(nil))
+			et := lib.NewExecutionTuple(nil, nil)
+			assert.Equal(t, "Up to 1.00 iterations/s for 8m0s over 2 stages (maxVUs: 20-50, gracefulStop: 30s)", cm["varrival"].GetDescription(et))
 
-			schedReqs := cm["varrival"].GetExecutionRequirements(nil)
+			schedReqs := cm["varrival"].GetExecutionRequirements(et)
 			endOffset, isFinal := lib.GetEndOffset(schedReqs)
 			assert.Equal(t, 510*time.Second, endOffset)
 			assert.Equal(t, true, isFinal)
 			assert.Equal(t, uint64(20), lib.GetMaxPlannedVUs(schedReqs))
 			assert.Equal(t, uint64(50), lib.GetMaxPossibleVUs(schedReqs))
 
-			totalReqs := cm.GetFullExecutionRequirements(nil)
+			totalReqs := cm.GetFullExecutionRequirements(et)
 			assert.Equal(t, schedReqs, totalReqs)
 		}},
 	},
@@ -334,6 +340,7 @@ func TestConfigMapParsingAndValidation(t *testing.T) {
 
 func TestVariableLoopingVUsConfigExecutionPlanExample(t *testing.T) {
 	t.Parallel()
+	et := lib.NewExecutionTuple(nil, nil)
 	conf := NewVariableLoopingVUsConfig("test")
 	conf.StartVUs = null.IntFrom(4)
 	conf.Stages = []Stage{
@@ -393,7 +400,7 @@ func TestVariableLoopingVUsConfigExecutionPlanExample(t *testing.T) {
 		{TimeOffset: 42 * time.Second, PlannedVUs: 4},
 		{TimeOffset: 50 * time.Second, PlannedVUs: 1},
 		{TimeOffset: 53 * time.Second, PlannedVUs: 0},
-	}, conf.GetExecutionRequirements(nil))
+	}, conf.GetExecutionRequirements(et))
 
 	// Try a longer GracefulStop than the GracefulRampDown
 	conf.GracefulStop = types.NullDurationFrom(80 * time.Second)
@@ -405,7 +412,7 @@ func TestVariableLoopingVUsConfigExecutionPlanExample(t *testing.T) {
 		{TimeOffset: 42 * time.Second, PlannedVUs: 4},
 		{TimeOffset: 50 * time.Second, PlannedVUs: 1},
 		{TimeOffset: 103 * time.Second, PlannedVUs: 0},
-	}, conf.GetExecutionRequirements(nil))
+	}, conf.GetExecutionRequirements(et))
 
 	// Try a much shorter GracefulStop than the GracefulRampDown
 	conf.GracefulStop = types.NullDurationFrom(3 * time.Second)
@@ -414,7 +421,7 @@ func TestVariableLoopingVUsConfigExecutionPlanExample(t *testing.T) {
 		{TimeOffset: 1 * time.Second, PlannedVUs: 5},
 		{TimeOffset: 2 * time.Second, PlannedVUs: 6},
 		{TimeOffset: 26 * time.Second, PlannedVUs: 0},
-	}, conf.GetExecutionRequirements(nil))
+	}, conf.GetExecutionRequirements(et))
 
 	// Try a zero GracefulStop
 	conf.GracefulStop = types.NullDurationFrom(0 * time.Second)
@@ -423,9 +430,9 @@ func TestVariableLoopingVUsConfigExecutionPlanExample(t *testing.T) {
 		{TimeOffset: 1 * time.Second, PlannedVUs: 5},
 		{TimeOffset: 2 * time.Second, PlannedVUs: 6},
 		{TimeOffset: 23 * time.Second, PlannedVUs: 0},
-	}, conf.GetExecutionRequirements(nil))
+	}, conf.GetExecutionRequirements(et))
 
 	// Try a zero GracefulStop and GracefulRampDown, i.e. raw steps with 0 end cap
 	conf.GracefulRampDown = types.NullDurationFrom(0 * time.Second)
-	assert.Equal(t, rawStepsZeroEnd, conf.GetExecutionRequirements(nil))
+	assert.Equal(t, rawStepsZeroEnd, conf.GetExecutionRequirements(et))
 }
