@@ -183,13 +183,16 @@ func TestConstantArrivalRateRunCorrectTiming(t *testing.T) {
 			newET := es.ExecutionTuple.GetNewExecutionTupleBasedOnValue(config.MaxVUs.Int64)
 			rateScaled := newET.ScaleInt64(config.Rate.Int64)
 			var startTime = time.Now()
-			var expectedTime = test.start
+			var expectedTimeInt64 = int64(test.start)
 			var ctx, cancel, executor, logHook = setupExecutor(
 				t, config, es,
 				simpleRunner(func(ctx context.Context) error {
 					current := atomic.AddInt64(&count, 1)
+
+					var expectedTime = test.start
 					if current != 1 {
-						expectedTime += time.Millisecond * time.Duration(test.steps[(current-2)%int64(len(test.steps))])
+						expectedTime = time.Duration(atomic.AddInt64(&expectedTimeInt64,
+							int64(time.Millisecond)*test.steps[(current-2)%int64(len(test.steps))]))
 					}
 					assert.WithinDuration(t,
 						startTime.Add(expectedTime),
